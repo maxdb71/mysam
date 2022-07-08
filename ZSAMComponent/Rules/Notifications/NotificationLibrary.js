@@ -85,7 +85,7 @@ export default class {
 	}
 
 	static getFlocCatalog(context) {
-		let floc = context.getPageProxy().binding.HeaderFunctionLocation;
+		let floc = context.getPageProxy().binding.myHeaderFunctionLocation;
 		let equi = context.getPageProxy().binding.HeaderEquipment;
 		let cat = libCom.getAppParam(context, 'CATALOGTYPE', 'ZCatTypeCoding');
 		let entitySet = '';
@@ -421,27 +421,28 @@ export default class {
 					// eslint-disable-next-line brace-style
 					'NotificationType': (function () { try { return context.getPageProxy().evaluateTargetPath('#Control:TypeLstPkr/#SelectedValue'); } catch (e) { return ''; } })(),
 					// eslint-disable-next-line brace-style
-					'HeaderEquipment': (function () { try { return context.getPageProxy().evaluateTargetPath('#Control:EquipHierarchyExtensionControl/#SelectedValue'); } catch (e) { return ''; } })(),
+					'HeaderEquipment': (function () { try { return context.getPageProxy().evaluateTargetPath('#Control:EquipmentLstPkr/#SelectedValue'); } catch (e) { return ''; } })(),
 					// eslint-disable-next-line brace-style
-					'HeaderFunctionLocation': (function () { try { return context.getPageProxy().evaluateTargetPath('#Control:FuncLocHierarchyExtensionControl/#SelectedValue'); } catch (e) { return ''; } })(),
+					'HeaderFunctionLocation': (function () { try { return context.getPageProxy().evaluateTargetPath('#Control:FunctionalLocationLstPkr/#SelectedValue'); } catch (e) { return ''; } })(),
 				};
 			}
-			return this.CatalogCodeQuery(context, notif, 'CatTypeDefects', true).then(function (result) {
-				selection = selection[0].ReturnValue;
+			return this.CatalogCodeQuery(context, notif, 'CatTypeDefects', true) //onlyCatalogType
+				.then(function (result) {
+					selection = selection[0].ReturnValue;
 
-				specifier.setDisplayValue('{{#Property:Code}} - {{#Property:CodeDescription}}');
-				specifier.setReturnValue('{Code}');
+					specifier.setDisplayValue('{{#Property:Code}} - {{#Property:CodeDescription}}');
+					specifier.setReturnValue('{Code}');
 
-				specifier.setEntitySet('PMCatalogCodes');
-				specifier.setService('/SAPAssetManager/Services/AssetManager.service');
+					specifier.setEntitySet('PMCatalogCodes');
+					specifier.setService('/SAPAssetManager/Services/AssetManager.service');
 
-				specifier.setQueryOptions("$filter=Catalog eq '" + result.Catalog + "' and CodeGroup eq '" + selection + "'&$orderby=Code");
-				libCom.setEditable(targetList, true);
+					specifier.setQueryOptions("$filter=Catalog eq '" + result.Catalog + "' and CodeGroup eq '" + selection + "'&$orderby=Code");
+					libCom.setEditable(targetList, true);
 
-				return targetList.setTargetSpecifier(specifier).then(() => {
-					targetList.setValue('');
+					return targetList.setTargetSpecifier(specifier).then(() => {
+						targetList.setValue('');
+					});
 				});
-			});
 		} else {
 			targetList.setValue('');
 			libCom.setEditable(targetList, false);
@@ -511,14 +512,19 @@ export default class {
 	}
 
 	static CatalogCodeQuery(context, notification, type, onlyCatalogType) {
-
 		if (onlyCatalogType) {
 			let cat = libCom.getAppParam(context, 'CATALOGTYPE', type);
-			return {
+			let result = {
 				'Catalog': cat,
 				'CatalogProfile': ''
 			};
+			return Promise.resolve(result)
+				.then(function (value) {
+					return value;
+				})
 		}
+
+
 		// Assume we do not have a valid readLink (We're on a changeset)
 		let equipEntitySet = 'MyEquipments';
 		let flocEntitySet = 'MyFunctionalLocations';

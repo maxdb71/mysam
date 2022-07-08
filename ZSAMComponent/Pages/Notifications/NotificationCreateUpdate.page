@@ -142,13 +142,7 @@
 								"MinimumCharacterThreshold": 3
 							},
 							"PickerItems": {
-								"ObjectCell": {
-									"Title": "{{#Property:FuncLocId}} - {{#Property:FuncLocDesc}}",
-									"StatusText": "{{#Property:CatalogProfile}}",
-									"Styles": {
-										"StatusText": "Zinvisible"
-        							}
-          						},
+								"DisplayValue": "{{#Property:FuncLocId}} - {{#Property:FuncLocDesc}}",
 								"ReturnValue": "{FuncLocIdIntern}",
 								"Target": {
 									"EntitySet": "MyFunctionalLocations",

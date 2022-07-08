@@ -14,23 +14,28 @@ export default function NotificationCreateUpdatePickerItems(context) {
                 let funcLocControlValue = context.getValue();
                 let codingGroupControl = formCellContainer.getControl('CodingGroupLstPkr');
                 codingGroupControl.setValue('');
+                common.setEditable(codingGroupControl, false);
                 let codingGroupCtrlSpecifier = codingGroupControl.getTargetSpecifier();
 
                 let equipmentControl = formCellContainer.getControl('EquipmentLstPkr');
-                let equipmentCtrlSpecifier = equipmentControl.getTargetSpecifier();
-                equipmentControl.setValue('');
+                if (!context.getPageProxy().binding.dontTouchEqui) {
+                    equipmentControl.setValue('');
+                    context.getPageProxy().binding.dontTouchEqui = false;
+                }
 
                 if (funcLocControlValue && common.getListPickerValue(funcLocControlValue) !== '') {
                     common.setEditable(equipmentControl, true);
+                    let equipmentCtrlSpecifier = equipmentControl.getTargetSpecifier();
                     equipmentCtrlSpecifier.setQueryOptions("$filter=FuncLocIdIntern eq '" + common.getListPickerValue(funcLocControlValue) + "'&$orderby=EquipId");
+                    equipmentControl.setTargetSpecifier(equipmentCtrlSpecifier);
 
                     let cat = '';
-                    let decision = true;
-                    if (decision) {
-                        context.getPageProxy().binding.HeaderFunctionLocation = common.getListPickerValue(funcLocControlValue);
-                        notifLib.getFlocCatalog(context)
-                            .then(function (_CatalogProfile) {
-                                context.getPageProxy().binding._CatalogProfile = _CatalogProfile;
+                    context.getPageProxy().binding.myHeaderFunctionLocation = common.getListPickerValue(funcLocControlValue);
+                    return notifLib.getFlocCatalog(context)
+                        .then(function (_CatalogProfile) {
+                            context.getPageProxy().binding._CatalogProfile = _CatalogProfile;
+                            common.setEditable(codingGroupControl, true);
+                            try {
                                 //Set Coding Group
                                 cat = libCom.getAppParam(context, 'CATALOGTYPE', 'ZCatTypeCoding');
                                 codingGroupCtrlSpecifier.setQueryOptions("$filter=Catalog eq '" + cat + "' and CatalogProfile eq '" + _CatalogProfile + "'&$orderby=CodeGroup");
@@ -48,80 +53,16 @@ export default function NotificationCreateUpdatePickerItems(context) {
                                 cat = libCom.getAppParam(context, 'CATALOGTYPE', 'CatTypeCauses');
                                 causeGrpCtrlSpecifier.setQueryOptions("$filter=Catalog eq '" + cat + "' and CatalogProfile eq '" + _CatalogProfile + "'&$orderby=CodeGroup");
                                 causeGrpControl.setTargetSpecifier(causeGrpCtrlSpecifier);
-                            })
-                    } else {
-                        //Set Coding Group
-                        if (false) {
-                            context.getPageProxy().binding.HeaderFunctionLocation = common.getListPickerValue(funcLocControlValue);
-                            let prom = notifLib.getCodingGroupQuery(context);
-                            prom.then(function (codingGroupQuery) {
-                                codingGroupCtrlSpecifier.setQueryOptions(codingGroupQuery);
-                                codingGroupControl.setTargetSpecifier(codingGroupCtrlSpecifier);
-                            })
-                        } else {
-                            let cat = libCom.getAppParam(context, 'CATALOGTYPE', 'ZCatTypeCoding');
-                            let _CatalogProfile = context.getValue()[0].DisplayValue.StatusText; //context.getValue()[0].DisplayValue = "USW-USB3 - Aurora (FL00000W)"
-                            //let regExp = /\(([^)]+)\)/;
-                            //_CatalogProfile = regExp.exec(_CatalogProfile);
-                            //_CatalogProfile = _CatalogProfile[1];
-                            codingGroupCtrlSpecifier.setQueryOptions("$filter=Catalog eq '" + cat + "' and CatalogProfile eq '" + _CatalogProfile + "'&$orderby=Catalog,CatalogProfile,CodeGroup");
-                            codingGroupControl.setTargetSpecifier(codingGroupCtrlSpecifier);
-                        }
-                        //Set Damage
-                        if (false) {
-                            let damageGrpControl = formCellContainer.getControl('DamageGroupLstPkr');
-                            if (damageGrpControl) {
-                                let damageGrpCtrlSpecifier = damageGrpControl.getTargetSpecifier();
-                                prom = notifLib.NotificationDamNCausQuery(context, 'CatTypeDefects');
-                                prom.then(function (damageGrpQuery) {
-                                    damageGrpCtrlSpecifier.setQueryOptions(damageGrpQuery);
-                                    damageGrpControl.setTargetSpecifier(damageGrpCtrlSpecifier);
-                                })
+                            } catch (err) {
+                                //we are on a page w/o that control...
+                                console.log(err);
                             }
-                        } else {
-                            let damageGrpControl = formCellContainer.getControl('DamageGroupLstPkr');
-                            damageGrpControl.setValue('');
-                            if (damageGrpControl) {
-                                let cat = libCom.getAppParam(context, 'CATALOGTYPE', 'CatTypeDefects');
-                                let _CatalogProfile = context.getValue()[0].DisplayValue.StatusText; //context.getValue()[0].DisplayValue = "USW-USB3 - Aurora (FL00000W)"
-                                //let regExp = /\(([^)]+)\)/;
-                                //_CatalogProfile = regExp.exec(_CatalogProfile);
-                                //_CatalogProfile = _CatalogProfile[1];
-                                let damageGrpCtrlSpecifier = damageGrpControl.getTargetSpecifier();
-                                damageGrpCtrlSpecifier.setQueryOptions("$filter=Catalog eq '" + cat + "' and CatalogProfile eq '" + _CatalogProfile + "'&$orderby=Catalog,CatalogProfile,CodeGroup");
-                                damageGrpControl.setTargetSpecifier(damageGrpCtrlSpecifier);
-                            }
-                        }
-                        //Set Cause
-                        if (false) {
-                            let causeGrpControl = formCellContainer.getControl('CauseGroupLstPkr');
-                            if (causeGrpControl) {
-                                let causeGrpCtrlSpecifier = causeGrpControl.getTargetSpecifier();
-                                prom = notifLib.NotificationDamNCausQuery(context, 'CatTypeCauses');
-                                prom.then(function (causeGrpQuery) {
-                                    causeGrpCtrlSpecifier.setQueryOptions(causeGrpQuery);
-                                    causeGrpControl.setTargetSpecifier(causeGrpCtrlSpecifier);
-                                })
-                            }
-                        } else {
-                            let causeGrpControl = formCellContainer.getControl('CauseGroupLstPkr');
-                            causeGrpControl.setValue('');
-                            if (causeGrpControl) {
-                                let cat = libCom.getAppParam(context, 'CATALOGTYPE', 'CatTypeCauses');
-                                let _CatalogProfile = context.getValue()[0].DisplayValue.StatusText; //context.getValue()[0].DisplayValue = "USW-USB3 - Aurora (FL00000W)"
-                                //let regExp = /\(([^)]+)\)/;
-                                //_CatalogProfile = regExp.exec(_CatalogProfile);
-                                //_CatalogProfile = _CatalogProfile[1];
-                                let causeGrpCtrlSpecifier = causeGrpControl.getTargetSpecifier();
-                                causeGrpCtrlSpecifier.setQueryOptions("$filter=Catalog eq '" + cat + "' and CatalogProfile eq '" + _CatalogProfile + "'&$orderby=Catalog,CatalogProfile,CodeGroup");
-                                causeGrpControl.setTargetSpecifier(causeGrpCtrlSpecifier);
-                            }
-                        }
-                    }
+                        })
                 } else {
+                    let equipmentCtrlSpecifier = equipmentControl.getTargetSpecifier();
                     equipmentCtrlSpecifier.setQueryOptions('');
+                    equipmentControl.setTargetSpecifier(equipmentCtrlSpecifier);
                 }
-                equipmentControl.setTargetSpecifier(equipmentCtrlSpecifier);
                 break;
             }
         case 'EquipmentLstPkr':
@@ -146,6 +87,7 @@ export default function NotificationCreateUpdatePickerItems(context) {
                         .then(results => {
                             if (results.length > 0 && results.getItem(0).FuncLocIdIntern) {
                                 funcLocControl.setValue(results.getItem(0).FuncLocIdIntern, true);
+                                context.getPageProxy().binding.dontTouchEqui = true;
                             }
                             funcLocControl.setTargetSpecifier(funcLocCtrlSpecifier);
                         });
